@@ -1,13 +1,18 @@
 // https://yumbrands.atlassian.net/issues/?filter=10897
 import { StacheElement, type, ObservableObject, stache } from "//unpkg.com/can@6/core.mjs";
-import {getBusinessDatesCount} from "./status-helpers.js";
+import { getBusinessDatesCount } from "./status-helpers.js";
+import {estimateExtraPoints} from "./confidence.js";
 
 
-const DAY = 1000* 60* 60 *24;
+const DAY = 1000 * 60 * 60 * 24;
 
-class CapacityPlanning extends StacheElement {
+export class CapacityPlanning extends StacheElement {
 	static view = `
 		<h2>Capacity Planner</h2>
+		<div>
+			<label class="form-label">JQL to retrieve initiatives and epics:</label>
+			<input class="form-control" value:bind='this.jql'/>
+		</div>
 		<input valueAsDate:to="this.startDate" type='date'/>
 		<input valueAsDate:to="this.endDate" type='date'/>
 
@@ -26,7 +31,7 @@ class CapacityPlanning extends StacheElement {
 						{{# for(epic of team.dev.issues)}}
 							<tr><td>{{epic.Summary}}</td><td><a href="{{initiative.url}}">{{epic["Issue key"]}}</a></td><td>{{epic.workingDaysInPeriod}}</td></tr>
 						{{/ for}}
-
+					</tbody>
 				</table>
 
 			{{/}}
@@ -42,18 +47,63 @@ class CapacityPlanning extends StacheElement {
 	`;
 
 	static props = {
+		jql: {
+			value({ lastSet, listenTo, resolve }) {
+				if (lastSet.value) {
+					resolve(lastSet.value)
+				} else {
+					resolve(new URL(window.location).searchParams.get("jql") || "");
+				}
+
+				listenTo(lastSet, (value) => {
+					const newUrl = new URL(window.location);
+					newUrl.searchParams.set("jql", value)
+					history.pushState({}, '', newUrl);
+					resolve(value);
+				})
+			}
+		},
 		startDate: {
 			type: type.maybe(Date),
 		},
 		endDate: {
 			type: type.maybe(Date),
 		},
-		rawIssues: type.Any,
-		get epicsBetweenDates(){
-			if(this.rawIssues && this.startDate && this.endDate) {
-				return this.rawIssues.filter( (issue)=> {
-					if( issue["Issue Type"] === "Epic" ) {
-						if(issue["Start date"] || issue["Due date"]) {
+		rawIssues: {
+			async(resolve) {
+				if(this.jql) {
+					const serverInfoPromise = this.jiraHelpers.getServerInfo();
+		
+					const issuesPromise = this.jiraHelpers.fetchAllJiraIssuesWithJQLAndFetchAllChangelogUsingNamedFields({
+						jql: this.jql,
+						fields: ["summary",
+								"Start date",
+								"Due date",
+								"Issue Type",
+								"Fix versions",
+								"Story Points",
+								"Confidence",
+								"Product Target Release"], // LABELS_KEY, STATUS_KEY ],
+						expand: ["changelog"]
+					});
+		
+					return Promise.all([
+						issuesPromise, serverInfoPromise
+					]).then( ([issues, serverInfo])=>{
+						return addWorkingBusinessDays( toCVSFormat(issues, serverInfo) );
+					})
+		
+				}
+
+				return Promise.resolve();
+			}
+		},
+		get epicsBetweenDates() {
+			if (this.rawIssues && this.startDate && this.endDate) {
+				debugger;
+				return this.rawIssues.filter((issue) => {
+					if (issue["Issue Type"] === "Epic") {
+						if (issue["Start date"] || issue["Due date"]) {
 							const epicStart = issue["Start date"] ? new Date(issue["Start date"]).getTime() : 0;
 							const epicEnd = issue["Due date"] ? new Date(issue["Due date"]).getTime() : Infinity;
 							return this.startDate.getTime() <= epicEnd && epicStart <= this.endDate.getTime()
@@ -61,33 +111,33 @@ class CapacityPlanning extends StacheElement {
 
 					}
 					return false;
-				}).map((epic)=>{
+				}).map((epic) => {
 					let epicStart = epic["Start date"] ? new Date(epic["Start date"]) : this.startDate;
 					let epicEnd = epic["Due date"] ? new Date(epic["Due date"]) : this.endDate;
-					if(epicStart <= this.startDate) {
+					if (epicStart <= this.startDate) {
 						epicStart = this.startDate
 					}
-					if(epicEnd >= this.endDate) {
+					if (epicEnd >= this.endDate) {
 						epicEnd = this.endDate
 					}
 
 					return {
 						...epic,
-						workingDaysInPeriod:getBusinessDatesCount(epicStart, epicEnd)
+						workingDaysInPeriod: getBusinessDatesCount(epicStart, epicEnd)
 					}
 				})
 			}
 		}
 	}
-	get teams(){
-		if(!this.rawIssues) {
+	get teams() {
+		if (!this.rawIssues) {
 			return new Set();
 		}
-		return new Set( this.rawIssues.map( issue => issue["Project key"]) );
+		return new Set(this.rawIssues.map(issue => issue["Project key"]));
 	}
-	get workBreakdownSummary(){
-		if(this.epicsBetweenDates) {
-			const teams = [...this.teams].map((team)=>{
+	get workBreakdownSummary() {
+		if (this.epicsBetweenDates) {
+			const teams = [...this.teams].map((team) => {
 				return {
 					name: team,
 					dev: {
@@ -104,9 +154,9 @@ class CapacityPlanning extends StacheElement {
 					}
 				}
 			})
-			this.epicsBetweenDates.forEach( (epic)=>{
+			this.epicsBetweenDates.forEach((epic) => {
 				// fix O(n^2) later
-				const team = teams.find( team => epic["Project key"] === team.name);
+				const team = teams.find(team => epic["Project key"] === team.name);
 				team[epic.workType].issues.push(epic);
 				team[epic.workType].sum += epic.workingDaysInPeriod;
 			});
@@ -115,5 +165,74 @@ class CapacityPlanning extends StacheElement {
 	}
 }
 
+const ISSUE_KEY = "Issue key";
+const PRODUCT_TARGET_RELEASE_KEY = "Product Target Release";
+const ISSUE_TYPE_KEY = "Issue Type";
+const PARENT_LINK_KEY = "Parent Link";
+const START_DATE_KEY = "Start date";
+const DUE_DATE_KEY = "Due date";
+const LABELS_KEY = "Labels";
+const STATUS_KEY = "Status";
+const FIX_VERSIONS_KEY = "Fix versions";
+
+function addWorkingBusinessDays(issues) {
+	return issues.map( issue => {
+		let weightedEstimate = null;
+		if( issue["Story Points"]) {
+			if(issue["Confidence"]) {
+				weightedEstimate = issue["Story Points"] + Math.round( estimateExtraPoints(issue["Story Points"], issue["Confidence"]) );
+			} else {
+				weightedEstimate = issue["Story Points"];
+			}
+		}
+
+		return {
+			...issue,
+			workType: isQAWork(issue) ? "qa" : ( isPartnerReviewWork(issue) ? "uat" : "dev"),
+			workingBusinessDays:
+				issue["Due date"] && issue["Start date"] ?
+					getBusinessDatesCount( new Date(issue["Start date"]), new Date(issue["Due date"]) )  : null,
+			weightedEstimate: weightedEstimate
+		};
+	})
+}
+
+function filterByLabel(issues,label){
+	return issues.filter(
+		issue => (issue[LABELS_KEY] || []).filter(
+			l => l.includes(label)
+		).length
+	);
+}
+function filterQAWork(issues) {
+	return filterByLabel(issues, "QA")
+}
+function isQAWork(issue) {
+	return filterQAWork([issue]).length > 0
+}
+function filterPartnerReviewWork(issues) {
+	return filterByLabel(issues, "UAT")
+}
+function isPartnerReviewWork(issue) {
+	return filterPartnerReviewWork([issue]).length > 0
+}
+
+
+function toCVSFormat(issues, serverInfo){
+	return issues.map( issue => {
+		return {
+			...issue.fields,
+			changelog: issue.changelog,
+			"Project key": issue.key.replace(/-.*/,""),
+			[ISSUE_KEY]: issue.key,
+			url: serverInfo.baseUrl+"/browse/"+issue.key,
+			[ISSUE_TYPE_KEY]: issue.fields[ISSUE_TYPE_KEY].name,
+			[PRODUCT_TARGET_RELEASE_KEY]: issue.fields[PRODUCT_TARGET_RELEASE_KEY]?.[0],
+			[PARENT_LINK_KEY]: issue.fields[PARENT_LINK_KEY]?.data?.key,
+			[STATUS_KEY]: issue.fields[STATUS_KEY]?.name
+		}
+	})
+}
 
 customElements.define("capacity-planning", CapacityPlanning);
+

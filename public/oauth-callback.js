@@ -1,4 +1,4 @@
-function oauthCallback(jiraHelpers){
+export default function oauthCallback(jiraHelpers){
 
 	const queryParams = new URLSearchParams(window.location.search)
 	const queryCode = queryParams.get('code')
