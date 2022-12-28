@@ -2,19 +2,17 @@
 import { StacheElement, type, ObservableObject, stache } from "//unpkg.com/can@6/core.mjs";
 import { getBusinessDatesCount } from "./status-helpers.js";
 import {estimateExtraPoints} from "./confidence.js";
-
+import { JQLInput } from "./jql-input.js";
+import { getStartOfNextQuarter, getEndOfNextQuarter } from "./dateUtils.js";
 
 const DAY = 1000 * 60 * 60 * 24;
 
 export class CapacityPlanning extends StacheElement {
 	static view = `
 		<h2>Capacity Planner</h2>
-		<div>
-			<label class="form-label">JQL to retrieve initiatives and epics:</label>
-			<input class="form-control" value:bind='this.jql'/>
-		</div>
-		<input valueAsDate:to="this.startDate" type='date'/>
-		<input valueAsDate:to="this.endDate" type='date'/>
+		<jql-input jql:to="jql" />
+		<input valueAsDate:bind="this.startDate" type='date'/>
+		<input valueAsDate:bind="this.endDate" type='date'/>
 
 		{{# if(this.workBreakdownSummary)}}
 
@@ -48,26 +46,15 @@ export class CapacityPlanning extends StacheElement {
 
 	static props = {
 		jql: {
-			value({ lastSet, listenTo, resolve }) {
-				if (lastSet.value) {
-					resolve(lastSet.value)
-				} else {
-					resolve(new URL(window.location).searchParams.get("jql") || "");
-				}
-
-				listenTo(lastSet, (value) => {
-					const newUrl = new URL(window.location);
-					newUrl.searchParams.set("jql", value)
-					history.pushState({}, '', newUrl);
-					resolve(value);
-				})
-			}
+			type: String,
 		},
 		startDate: {
-			type: type.maybe(Date),
+			type: type.convert(Date),
+			default: getStartOfNextQuarter(new Date()),
 		},
 		endDate: {
-			type: type.maybe(Date),
+			type: type.convert(Date),
+			default: getEndOfNextQuarter(new Date()),
 		},
 		rawIssues: {
 			async(resolve) {
@@ -100,7 +87,6 @@ export class CapacityPlanning extends StacheElement {
 		},
 		get epicsBetweenDates() {
 			if (this.rawIssues && this.startDate && this.endDate) {
-				debugger;
 				return this.rawIssues.filter((issue) => {
 					if (issue["Issue Type"] === "Epic") {
 						if (issue["Start date"] || issue["Due date"]) {

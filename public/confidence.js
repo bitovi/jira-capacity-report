@@ -1,8 +1,6 @@
 export function estimateExtraPoints(estimate, confidence, uncertaintyWeight = 100) {
-    return estimate * NormSInv( toP(confidence) ) * (uncertaintyWeight / 100);
+    return estimate * NormSInv(toP(confidence)) * (uncertaintyWeight / 100);
 }
-
-
 
 export function NormSInv(p) {
     var a1 = -39.6968302866538, a2 = 220.946098424521, a3 = -275.928510446969;
@@ -16,33 +14,26 @@ export function NormSInv(p) {
     var q, r;
     var retVal;
 
-    if ((p < 0) || (p > 1))
-    {
+    if ((p < 0) || (p > 1)) {
         alert("NormSInv: Argument out of range.");
         retVal = 0;
     }
-    else if (p < p_low)
-    {
+    else if (p < p_low) {
         q = Math.sqrt(-2 * Math.log(p));
         retVal = (((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) / ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
     }
-    else if (p <= p_high)
-    {
+    else if (p <= p_high) {
         q = p - 0.5;
         r = q * q;
         retVal = (((((a1 * r + a2) * r + a3) * r + a4) * r + a5) * r + a6) * q / (((((b1 * r + b2) * r + b3) * r + b4) * r + b5) * r + 1);
     }
-    else
-    {
+    else {
         q = Math.sqrt(-2 * Math.log(1 - p));
         retVal = -(((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) / ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
     }
 
     return retVal;
 }
-
-
-
 
 export function toP(confidence) {
     var cd = confidence / 100;
