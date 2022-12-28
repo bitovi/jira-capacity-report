@@ -10,9 +10,12 @@ const DAY = 1000 * 60 * 60 * 24;
 export class CapacityPlanning extends StacheElement {
 	static view = `
 		<h2>Capacity Planner</h2>
-		<jql-input jql:to="jql" />
-		<input valueAsDate:bind="this.startDate" type='date'/>
-		<input valueAsDate:bind="this.endDate" type='date'/>
+		
+		<div class="container">
+			<jql-input jql:to="jql" />
+			<input class="form-control mb-3" valueAsDate:bind="this.startDate" type='date'/>
+			<input class="form-control mb-3" valueAsDate:bind="this.endDate" type='date'/>
+		</div>
 
 		{{# if(this.workBreakdownSummary)}}
 
@@ -20,7 +23,7 @@ export class CapacityPlanning extends StacheElement {
 				<h3>Work for {{team.name}}</h3>
 				<h4>Dev Work (total = {{team.dev.sum}})</h4>
 
-				<table>
+				<table class="table table-striped-columns">
 					<thead>
 						<tr><th>Features</th><th>Jira Link</th><th>Points</th></tr>
 					</thead>
@@ -31,7 +34,6 @@ export class CapacityPlanning extends StacheElement {
 						{{/ for}}
 					</tbody>
 				</table>
-
 			{{/}}
 
 		{{/ if}}
@@ -146,6 +148,8 @@ export class CapacityPlanning extends StacheElement {
 				team[epic.workType].issues.push(epic);
 				team[epic.workType].sum += epic.workingDaysInPeriod;
 			});
+
+			console.log(teams)
 			return teams;
 		}
 	}
