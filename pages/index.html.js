@@ -1,6 +1,6 @@
 const getSafeEnv = require("../server/client-env");
 
-module.exports = function(env){
+module.exports = function (env) {
 	return `
 	<!DOCTYPE html>
 	<html lang="en">

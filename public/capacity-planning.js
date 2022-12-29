@@ -1,8 +1,9 @@
 // https://yumbrands.atlassian.net/issues/?filter=10897
 import { StacheElement, type, ObservableObject, stache } from "//unpkg.com/can@6/core.mjs";
 import { getBusinessDatesCount } from "./status-helpers.js";
-import {estimateExtraPoints} from "./confidence.js";
+import { estimateExtraPoints } from "./confidence.js";
 import { JQLInput } from "./jql-input.js";
+import { CapacityChart } from "./capacity-chart.js"
 import { getStartOfNextQuarter, getEndOfNextQuarter } from "./dateUtils.js";
 
 const DAY = 1000 * 60 * 60 * 24;
@@ -18,6 +19,8 @@ export class CapacityPlanning extends StacheElement {
 		</div>
 
 		{{# if(this.workBreakdownSummary)}}
+
+			<capacity-chart startDate:bind="this.startDate" endDate:bind="this.endDate" epicsBetweenDates:bind="this.epicsBetweenDates" />
 
 			{{# for(team of this.workBreakdownSummary)}}
 				<h3>Work for {{team.name}}</h3>
@@ -60,28 +63,28 @@ export class CapacityPlanning extends StacheElement {
 		},
 		rawIssues: {
 			async(resolve) {
-				if(this.jql) {
+				if (this.jql) {
 					const serverInfoPromise = this.jiraHelpers.getServerInfo();
-		
+
 					const issuesPromise = this.jiraHelpers.fetchAllJiraIssuesWithJQLAndFetchAllChangelogUsingNamedFields({
 						jql: this.jql,
 						fields: ["summary",
-								"Start date",
-								"Due date",
-								"Issue Type",
-								"Fix versions",
-								"Story Points",
-								"Confidence",
-								"Product Target Release"], // LABELS_KEY, STATUS_KEY ],
+							"Start date",
+							"Due date",
+							"Issue Type",
+							"Fix versions",
+							"Story Points",
+							"Confidence",
+							"Product Target Release"], // LABELS_KEY, STATUS_KEY ],
 						expand: ["changelog"]
 					});
-		
+
 					return Promise.all([
 						issuesPromise, serverInfoPromise
-					]).then( ([issues, serverInfo])=>{
-						return addWorkingBusinessDays( toCVSFormat(issues, serverInfo) );
+					]).then(([issues, serverInfo]) => {
+						return addWorkingBusinessDays(toCVSFormat(issues, serverInfo));
 					})
-		
+
 				}
 
 				return Promise.resolve();
@@ -166,11 +169,11 @@ const STATUS_KEY = "Status";
 const FIX_VERSIONS_KEY = "Fix versions";
 
 function addWorkingBusinessDays(issues) {
-	return issues.map( issue => {
+	return issues.map(issue => {
 		let weightedEstimate = null;
-		if( issue["Story Points"]) {
-			if(issue["Confidence"]) {
-				weightedEstimate = issue["Story Points"] + Math.round( estimateExtraPoints(issue["Story Points"], issue["Confidence"]) );
+		if (issue["Story Points"]) {
+			if (issue["Confidence"]) {
+				weightedEstimate = issue["Story Points"] + Math.round(estimateExtraPoints(issue["Story Points"], issue["Confidence"]));
 			} else {
 				weightedEstimate = issue["Story Points"];
 			}
@@ -178,16 +181,16 @@ function addWorkingBusinessDays(issues) {
 
 		return {
 			...issue,
-			workType: isQAWork(issue) ? "qa" : ( isPartnerReviewWork(issue) ? "uat" : "dev"),
+			workType: isQAWork(issue) ? "qa" : (isPartnerReviewWork(issue) ? "uat" : "dev"),
 			workingBusinessDays:
 				issue["Due date"] && issue["Start date"] ?
-					getBusinessDatesCount( new Date(issue["Start date"]), new Date(issue["Due date"]) )  : null,
+					getBusinessDatesCount(new Date(issue["Start date"]), new Date(issue["Due date"])) : null,
 			weightedEstimate: weightedEstimate
 		};
 	})
 }
 
-function filterByLabel(issues,label){
+function filterByLabel(issues, label) {
 	return issues.filter(
 		issue => (issue[LABELS_KEY] || []).filter(
 			l => l.includes(label)
@@ -207,15 +210,20 @@ function isPartnerReviewWork(issue) {
 	return filterPartnerReviewWork([issue]).length > 0
 }
 
+function addDays(date, days) {
+	const copy = new Date(Number(date));
+	copy.setDate(date.getDate() + days);
+	return copy;
+}
 
-function toCVSFormat(issues, serverInfo){
-	return issues.map( issue => {
+function toCVSFormat(issues, serverInfo) {
+	return issues.map(issue => {
 		return {
 			...issue.fields,
 			changelog: issue.changelog,
-			"Project key": issue.key.replace(/-.*/,""),
+			"Project key": issue.key.replace(/-.*/, ""),
 			[ISSUE_KEY]: issue.key,
-			url: serverInfo.baseUrl+"/browse/"+issue.key,
+			url: serverInfo.baseUrl + "/browse/" + issue.key,
 			[ISSUE_TYPE_KEY]: issue.fields[ISSUE_TYPE_KEY].name,
 			[PRODUCT_TARGET_RELEASE_KEY]: issue.fields[PRODUCT_TARGET_RELEASE_KEY]?.[0],
 			[PARENT_LINK_KEY]: issue.fields[PARENT_LINK_KEY]?.data?.key,
