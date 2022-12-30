@@ -5,6 +5,7 @@ import { estimateExtraPoints } from "./confidence.js";
 import { JQLInput } from "./jql-input.js";
 import { CapacityChart } from "./capacity-chart.js"
 import { getStartOfNextQuarter, getEndOfNextQuarter } from "./dateUtils.js";
+import "./team-breakdown.js"
 
 const DAY = 1000 * 60 * 60 * 24;
 
@@ -20,25 +21,11 @@ export class CapacityPlanning extends StacheElement {
 
 		{{# if(this.workBreakdownSummary)}}
 
-			<capacity-chart startDate:bind="this.startDate" endDate:bind="this.endDate" epicsBetweenDates:bind="this.epicsBetweenDates" />
+			<capacity-chart startDate:from="this.startDate" endDate:from="this.endDate" epicsBetweenDates:from="this.epicsBetweenDates" />
 
 			{{# for(team of this.workBreakdownSummary)}}
-				<h3>Work for {{team.name}}</h3>
-				<h4>Dev Work (total = {{team.dev.sum}})</h4>
-
-				<table class="table table-striped-columns">
-					<thead>
-						<tr><th>Features</th><th>Jira Link</th><th>Points</th></tr>
-					</thead>
-					<tbody>
-
-						{{# for(epic of team.dev.issues)}}
-							<tr><td>{{epic.Summary}}</td><td><a href="{{initiative.url}}">{{epic["Issue key"]}}</a></td><td>{{epic.workingDaysInPeriod}}</td></tr>
-						{{/ for}}
-					</tbody>
-				</table>
+				<team-breakdown name:from="team.name" sum:from="team.dev.sum" issues:from="team.dev.issues" />
 			{{/}}
-
 		{{/ if}}
 
 
