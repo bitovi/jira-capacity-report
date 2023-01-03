@@ -8,8 +8,14 @@ import { estimateExtraPoints } from "./confidence.js";
 export class JQLInput extends StacheElement {
 	static view = `
         <div>
-            <label class="form-label">JQL to retrieve initiatives and epics:</label>
+            <label class="form-label" area-describedby="jql-help">
+				JQL Query
+			</label>
             <input class="form-control" value:bind='this.jql'/>
+			<small id="jql-help" class="form-text text-muted">
+				Use
+				<a href="https://www.atlassian.com/blog/jira-software/jql-the-most-flexible-way-to-search-jira-14#:~:text=JQL%20stands%20for%20Jira%20Query,project%20managers%2C%20and%20business%20users." target="_blank">
+				JQL</a> to filter issues (defaults to "issuetype = Epic")
         </div>
     `
 

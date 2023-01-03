@@ -18,8 +18,14 @@ export class CapacityPlanning extends StacheElement {
 			<jql-input jql:to="jql" />
 		</div>
 		<div class="row mb-3">
-			<input class="form-control mb-3" valueAsDate:bind="this.startDate" type='date'/>
-			<input class="form-control mb-3" valueAsDate:bind="this.endDate" type='date'/>
+			<div class="col-md-6">
+				<label class="form-label">Start Date</label>
+				<input class="form-control mb-3" valueAsDate:bind="this.startDate" type='date'/>
+			</div>
+			<div class="col-md-6">
+				<label class="form-label">End Date</label>
+				<input class="form-control mb-3" valueAsDate:bind="this.endDate" type='date'/>
+			</div>
 		</div>
 		
 		
