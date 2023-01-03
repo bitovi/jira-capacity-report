@@ -3,7 +3,9 @@ import './chart.js';
 
 export class CapacityChartCanvas extends StacheElement {
     static view = `
-        <canvas id="capacityChart" width="100%"></canvas>
+    <div class="chart-container" style="position: relative; height: 40vh; width: 80vw">
+        <canvas id="capacityChart"></canvas>
+    </div>
     `
 
     connected() {
