@@ -14,26 +14,45 @@ export class CapacityPlanning extends StacheElement {
 		<h2>Capacity Planner</h2>
 		
 		<div class="container">
+		<div class="row mb-3">
 			<jql-input jql:to="jql" />
+		</div>
+		<div class="row mb-3">
 			<input class="form-control mb-3" valueAsDate:bind="this.startDate" type='date'/>
 			<input class="form-control mb-3" valueAsDate:bind="this.endDate" type='date'/>
 		</div>
+		
+		
+		{{# if(this.epicsBetweenDates)}}
+		<div class="row">
+			<div class="col">
+				<capacity-chart startDate:from="this.startDate" endDate:from="this.endDate" epicsBetweenDates:from="this.epicsBetweenDates" />
+			</div>
+		</div>
+		{{/ if}}}
+		
 
 		{{# if(this.workBreakdownSummary)}}
-
-			<capacity-chart startDate:from="this.startDate" endDate:from="this.endDate" epicsBetweenDates:from="this.epicsBetweenDates" />
+		
 
 			{{# for(team of this.workBreakdownSummary)}}
+			<div class="row">
 				<team-breakdown name:from="team.name" sum:from="team.dev.sum" issues:from="team.dev.issues" />
+			</div>
 			{{/}}
+
+		
 		{{/ if}}
 
 
 		{{# if(this.epicsBetweenDates)}}
+		<div class="row">
 			{{# for(epic of this.epicsBetweenDates)}}
 				<p>{{epic.Summary}} -  {{epic.workingDaysInPeriod}}</p>
 			{{/ }}
+		</div>
 		{{/}}
+		</div>
 	`;
 
 	static props = {

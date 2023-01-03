@@ -7,7 +7,7 @@ import { estimateExtraPoints } from "./confidence.js";
 
 export class JQLInput extends StacheElement {
 	static view = `
-        <div class="mb-3">
+        <div>
             <label class="form-label">JQL to retrieve initiatives and epics:</label>
             <input class="form-control" value:bind='this.jql'/>
         </div>
