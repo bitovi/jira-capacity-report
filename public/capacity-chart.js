@@ -77,32 +77,32 @@ export class CapacityChart extends StacheElement {
         },
         chartData: {
             value({ listenTo, lastSet, resolve }) {
-                console.log
                 listenTo('labels', () => {
-                    console.log('labels changed')
                     resolve(this.chartData);
                 });
-                listenTo('countEpicsAsDateRangePerWeekRange', () => {
-                    console.log('countEpicsAsDateRangePerWeekRange changed')
+                listenTo('epicsByTeamAsDateRangePerWeekRange', () => {
                     resolve(this.chartData);
                 });
             },
             get() {
-                if (this.countEpicsAsDateRangePerWeekRange && this.labels) {
+                if (this.epicsByTeamAsDateRangePerWeekRange && this.labels) {
+
+                    const datasets = Object.entries(this.epicsByTeamAsDateRangePerWeekRange).map(([team, data], i) => {
+                        return {
+                            label: team,
+                            data,
+                            fill: false,
+                            tension: 0.1
+                        }
+                    });
+
                     const result = {
                         type: 'line',
                         data: {
                             labels: this.labels,
-                            datasets: [{
-                                label: 'Epics in Flight During Week',
-                                data: this.countEpicsAsDateRangePerWeekRange,
-                                fill: false,
-                                borderColor: 'rgb(75, 192, 192)',
-                                tension: 0.1
-                            }]
+                            datasets,
                         }
                     }
-                    console.log(result)
                     return result;
                 }
             }
@@ -110,19 +110,33 @@ export class CapacityChart extends StacheElement {
     }
 
 
-    get countEpicsAsDateRangePerWeekRange() {
-        if (this.epicsBetweenDates && this.weekRanges) {
-            return this.weekRanges.map(week => {
-                const epicsInWeek = this.epicsBetweenDates.filter(epic => {
-                    const epicStart = new Date(epic["Start date"]);
-                    const epicEnd = new Date(epic["Due date"]);
-                    const overlaps = (epicStart <= week.end && epicEnd >= week.start);
+    get epicsByTeamAsDateRangePerWeekRange() {
+        const teams = {};
 
-                    return overlaps;
+        if (this.epicsBetweenDates && this.weekRanges) {
+            console.log(this.epicsBetweenDates)
+
+            this.epicsBetweenDates.forEach(epic => {
+                const epicStart = new Date(epic["Start date"]);
+                const epicEnd = new Date(epic["Due date"]);
+                const epicTeam = epic["Project key"];
+
+                if (!teams[epicTeam]) {
+                    teams[epicTeam] = Array.from({ length: this.weekRanges.length }, () => 0);
+                }
+
+                this.weekRanges.forEach((week, index) => {
+                    const overlaps = (epicStart <= week.end && epicEnd >= week.start);
+                    if (overlaps) {
+                        teams[epicTeam][index] += 1;
+                    }
                 });
-                return epicsInWeek.length;
-            })
+            });
+
+
         }
+
+        return teams;
     }
 
     get chartData() {

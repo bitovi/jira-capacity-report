@@ -19,7 +19,7 @@ export class JQLInput extends StacheElement {
 				if (lastSet.value) {
 					resolve(lastSet.value)
 				} else {
-					resolve(new URL(window.location).searchParams.get("jql") || "issueType = Epic");
+					resolve(new URL(window.location).searchParams.get("jql") || "issuetype = Epic");
 				}
 
 				listenTo(lastSet, (value) => {

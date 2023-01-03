@@ -4,7 +4,7 @@ import { getBusinessDatesCount } from "./status-helpers.js";
 import { estimateExtraPoints } from "./confidence.js";
 import { JQLInput } from "./jql-input.js";
 import { CapacityChart } from "./capacity-chart.js"
-import { getStartOfNextQuarter, getEndOfNextQuarter } from "./dateUtils.js";
+import { getStartOfNextQuarter, getEndOfNextQuarter, getStartOfThisQuarter, getEndOfThisQuarter } from "./dateUtils.js";
 import "./team-breakdown.js"
 
 const DAY = 1000 * 60 * 60 * 24;
@@ -42,11 +42,11 @@ export class CapacityPlanning extends StacheElement {
 		},
 		startDate: {
 			type: type.convert(Date),
-			default: getStartOfNextQuarter(new Date()),
+			default: getStartOfThisQuarter(new Date()),
 		},
 		endDate: {
 			type: type.convert(Date),
-			default: getEndOfNextQuarter(new Date()),
+			default: getEndOfThisQuarter(new Date()),
 		},
 		rawIssues: {
 			async(resolve) {
@@ -139,7 +139,6 @@ export class CapacityPlanning extends StacheElement {
 				team[epic.workType].sum += epic.workingDaysInPeriod;
 			});
 
-			console.log(teams)
 			return teams;
 		}
 	}
