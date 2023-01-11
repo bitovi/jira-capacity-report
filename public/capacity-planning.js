@@ -13,43 +13,50 @@ export class CapacityPlanning extends StacheElement {
 	static view = `
 		<h2>Capacity Planner</h2>
 		
-		<div class="container">
-		<div class="row mb-3">
-			<jql-input jql:to="jql" />
-		</div>
-		<div class="row mb-3">
-			<date-range startDate:to="startDate" endDate:to="endDate" />
-		</div>
-		
-		
-		{{# if(this.epicsBetweenDates)}}
-		<div class="row">
-			<div class="col">
-				<capacity-chart startDate:from="this.startDate" endDate:from="this.endDate" epicsBetweenDates:from="this.epicsBetweenDates" />
+		<div class="container mb-3">
+			<div class="row mb-3">
+				<jql-input jql:to="jql" />
 			</div>
+			<div class="row mb-3">
+				<date-range startDate:to="startDate" endDate:to="endDate" />
+			</div>
+
 		</div>
-		{{/ if}}}
 		
-
-		{{# if(this.workBreakdownSummary)}}
-		
-
-			{{# for(team of this.workBreakdownSummary)}}
+		<div class="container mb-3 mt-3">
+			
+			{{# if(this.epicsBetweenDates)}}
 			<div class="row">
-				<team-breakdown name:from="team.name" sum:from="team.dev.sum" issues:from="team.dev.issues" />
+				<div class="col">
+					<capacity-chart startDate:from="this.startDate" endDate:from="this.endDate" epicsBetweenDates:from="this.epicsBetweenDates" />
+				</div>
 			</div>
-			{{/}}
+			{{/ if}}}
+		
+		</div>
 
 		
-		{{/ if}}
+		<div class="container mt-3">
+
+			{{# if(this.workBreakdownSummary)}}
+			
+
+				{{# for(team of this.workBreakdownSummary)}}
+				<div class="row mb-3">
+					<team-breakdown name:from="team.name" sum:from="team.dev.sum" issues:from="team.dev.issues" />
+				</div>
+				{{/}}
+
+			
+			{{/ if}}
 
 
-		{{# if(this.epicsBetweenDates)}}
-		<div class="row">
-			{{# for(epic of this.epicsBetweenDates)}}
-				<p>{{epic.Summary}} -  {{epic.workingDaysInPeriod}}</p>
-			{{/ }}
-		</div>
+			{{# if(this.epicsBetweenDates)}}
+			<div class="row">
+				{{# for(epic of this.epicsBetweenDates)}}
+					<p>{{epic.Summary}} -  {{epic.workingDaysInPeriod}}</p>
+				{{/ }}
+			</div>
 		{{/}}
 		</div>
 	`;
