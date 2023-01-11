@@ -4,8 +4,8 @@ import { getBusinessDatesCount } from "./status-helpers.js";
 import { estimateExtraPoints } from "./confidence.js";
 import { JQLInput } from "./jql-input.js";
 import { CapacityChart } from "./capacity-chart.js"
-import { getStartOfNextQuarter, getEndOfNextQuarter, getStartOfThisQuarter, getEndOfThisQuarter } from "./dateUtils.js";
 import "./team-breakdown.js"
+import "./dateRange.js";
 
 const DAY = 1000 * 60 * 60 * 24;
 
@@ -18,14 +18,7 @@ export class CapacityPlanning extends StacheElement {
 			<jql-input jql:to="jql" />
 		</div>
 		<div class="row mb-3">
-			<div class="col-md-6">
-				<label class="form-label">Start Date</label>
-				<input class="form-control mb-3" valueAsDate:bind="this.startDate" type='date'/>
-			</div>
-			<div class="col-md-6">
-				<label class="form-label">End Date</label>
-				<input class="form-control mb-3" valueAsDate:bind="this.endDate" type='date'/>
-			</div>
+			<date-range startDate:to="startDate" endDate:to="endDate" />
 		</div>
 		
 		
@@ -67,11 +60,9 @@ export class CapacityPlanning extends StacheElement {
 		},
 		startDate: {
 			type: type.convert(Date),
-			default: getStartOfThisQuarter(new Date()),
 		},
 		endDate: {
 			type: type.convert(Date),
-			default: getEndOfThisQuarter(new Date()),
 		},
 		rawIssues: {
 			async(resolve) {
