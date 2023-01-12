@@ -6,14 +6,15 @@ import { JQLInput } from "./jql-input.js";
 import { CapacityChart } from "./capacity-chart.js"
 import "./team-breakdown.js"
 import "./dateRange.js";
+import "./navbar.js";
 
 const DAY = 1000 * 60 * 60 * 24;
 
 export class CapacityPlanning extends StacheElement {
 	static view = `
-		<h2>Capacity Planner</h2>
+		<nav-bar />
 		
-		<div class="container mb-3">
+		<div class="container mb-3 mt-3">
 			<div class="row mb-3">
 				<jql-input jql:to="jql" />
 			</div>

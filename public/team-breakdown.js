@@ -7,7 +7,7 @@ export class TeamBreakdown extends StacheElement {
 
         <table class="table table-striped-columns">
             <thead>
-                <tr><th>Features</th><th>Jira Link</th><th>Points</th></tr>
+                <tr><th>Features</th><th>Jira Link</th><th>Working Days</th></tr>
             </thead>
             <tbody>
                 {{# for(epic of this.issues)}}
