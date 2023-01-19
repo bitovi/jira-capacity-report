@@ -15,18 +15,24 @@ const port = process.env.PORT || 3000
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
-app.use(express.static(path.join(__dirname,'..', 'public')))
+app.use(express.static(path.join(__dirname, '..', 'public')))
 
 
 // Application routes
 const makeIndex = require("../pages/index.html");
 const makeOAuthCallback = require("../pages/oauth-callback.html");
+const makePlayground = require("../pages/playground.html");
+
 app.get('/', (req, res) => {
-	res.send(makeIndex(req));
+    res.send(makeIndex(req));
 });
 
+app.get('/playground/*', (req, res) => {
+    res.send(makePlayground(req));
+})
+
 app.get('/oauth-callback', (req, res) => {
-	res.send(makeOAuthCallback(req));
+    res.send(makeOAuthCallback(req));
 });
 
 app.get('/access-token', async (req, res) => {
@@ -34,19 +40,19 @@ app.get('/access-token', async (req, res) => {
     try {
         const code = req.query.code;
         const refresh = req.query.refresh;
-        if(!code) throw new Error("No Access code provided");
+        if (!code) throw new Error("No Access code provided");
         const {
             error,
             data: accessData,
             message
         } = await fetchTokenWithAccessCode(code, refresh);
-        if(error) {
+        if (error) {
             //handle properly
             return res.status(400).json({
                 error: true,
                 message,
             });
-        }else {
+        } else {
             data = accessData;
         }
         return res.json({

@@ -5,7 +5,7 @@ export class Navbar extends StacheElement {
     <header class="navbar navbar-expand-lg bg-dark" data-bs-theme="dark">
     <nav class="container-xxl bd-gutter flex-wrap flex-lg-nowrap">
         <div class="container">
-            <a class="navbar-brand">Capacity Planning</a>
+            <a class="navbar-brand">{{name}}</a>
             <button class="clipboard-button btn btn-sm btn-dark mb-1" on:click="copyLink()">
                 <span class="copy-link">
                     {{# if(linkCopied)}}
@@ -26,6 +26,10 @@ export class Navbar extends StacheElement {
             type: Boolean,
             default: false
         },
+        name: {
+            type: String,
+            default: "Jira Capacity Planning"
+        }
     };
 
 

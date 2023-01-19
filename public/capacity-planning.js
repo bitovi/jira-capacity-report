@@ -50,15 +50,6 @@ export class CapacityPlanning extends StacheElement {
 
 			
 			{{/ if}}
-
-
-			{{# if(this.epicsBetweenDates)}}
-			<div class="row">
-				{{# for(epic of this.epicsBetweenDates)}}
-					<p>{{epic.Summary}} -  {{epic.workingDaysInPeriod}}</p>
-				{{/ }}
-			</div>
-		{{/}}
 		</div>
 	`;
 

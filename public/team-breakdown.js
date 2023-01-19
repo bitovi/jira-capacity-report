@@ -7,12 +7,14 @@ export class TeamBreakdown extends StacheElement {
 
         <table class="table table-striped-columns">
             <thead>
-                <tr><th>Features</th><th>Jira Link</th><th>Working Days</th></tr>
+                <tr><th>Features</th><th>Start Date</th><th>Due Date</th><th>Jira Link</th><th>Working Days</th></tr>
             </thead>
             <tbody>
                 {{# for(epic of this.issues)}}
                     <tr>
                         <td>{{epic.Summary}}</td>
+                        <td>{{epic["Start date"]}}</td>
+                        <td>{{epic["Due date"]}}</td>
                         <td>
                             <a href="{{epic.url}}">{{epic["Issue key"]}}</a>
                         </td>
